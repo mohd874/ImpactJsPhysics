@@ -1,0 +1,10 @@
+https://www.youtube.com/watch?v=jEdPkw8aPRw&list=PLAD5A0C028DA09694
+
+http://impactjs.com/forums/impact-engine/websocket-in-ejecta-did-anyone-make-it-possible-now/page/1
+https://github.com/tawnkramer/Ejecta
+
+https://github.com/LearnBoost/socket.io
+
+http://krasimirtsonev.com/blog/article/Real-time-chat-with-NodeJS-Socketio-and-ExpressJS
+
+https://github.com/elbowdonkey/impsock
