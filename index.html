@@ -21,7 +21,15 @@
 			margin: auto;
 		}
 	</style>
-
+    <script type="text/javascript" charset="utf-8">
+        Array.prototype.diff = function(a) {
+            return this.filter(function(i) {return !(a.indexOf(i) > -1);});
+        };
+    </script>
+      
+    <script src="json.js" type="text/javascript" charset="utf-8"></script>
+    <script src="socket.io-client/socket.io.js" type="text/javascript" charset="utf-8"></script>
+  
 	<script type="text/javascript" src="lib/impact/impact.js"></script>
 	<script type="text/javascript" src="lib/game/main.js"></script>
 </head>
