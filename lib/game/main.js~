@@ -10,6 +10,7 @@ ig.module(
 	'game.entities.car',
 	'game.levels.test',
 	
+	'plugins.impsock',
 	'plugins.box2d.game'
 )
 .defines(function(){
@@ -22,6 +23,9 @@ MyGame = ig.Box2DGame.extend({
 	font: new ig.Font( 'media/04b03.font.png' ),
 	clearColor: '#1b2026',
 	
+	startingPosX: ((Math.random() * 200).toInt() + 16),
+    startingPosY: ((Math.random() * 50).toInt() + 16),
+    
 	init: function() {
 		// Bind keys
 		ig.input.bind( ig.KEY.LEFT_ARROW, 'left' );
@@ -35,6 +39,9 @@ MyGame = ig.Box2DGame.extend({
 			ig.input.bindTouch( '#buttonShoot', 'shoot' );
 			ig.input.bindTouch( '#buttonJump', 'jump' );
 		}
+		
+		// setup impsock
+		this.impsock = new ig.Impsock(this);
 		
 		// Load the LevelTest as required above ('game.level.test')
 		this.loadLevel( LevelTest );
@@ -51,9 +58,16 @@ MyGame = ig.Box2DGame.extend({
 		// Update all entities and BackgroundMaps
 		this.parent();
 		
+		
+		if (this.impsock.socket.connected) {
+		    this.joinGame();
+        } else {
+            // wait until connected    
+        }
+          
 		// screen follows the player
-		var player = this.getEntitiesByType( EntityCar )[0];
-		if( player ) {
+		//var player = this.getEntitiesByType( EntityCar )[0];
+		if( this.player ) {
 			this.screen.x = player.pos.x - ig.system.width/2;
 			this.screen.y = player.pos.y - ig.system.height/2;
 		}
@@ -66,7 +80,58 @@ MyGame = ig.Box2DGame.extend({
 		if( !ig.ua.mobile ) {
 			this.font.draw( 'Arrow Keys, X, C', 2, 2 );
 		}
-	}
+	},
+	
+	joinGame: function() {
+      if (this.getEntitiesByType(EntityCar).length == 0) {
+        // spawn our player entity
+        this.spawnEntity(EntityCar, this.startingPosX, this.startingPosY);
+
+        // when first loading the client, there's only one EntityPlayer
+        this.player = this.getEntitiesByType(EntityCar)[0];
+        
+        // announce our arrival to other clients
+        this.impsock.broadcast(this.player);
+      }
+    },
+    disconnectHandler: function(message) {
+      var orphan = ig.game.getEntityByName(message.remove);
+      if (orphan) {
+        orphan.kill();
+      }
+    },
+    broadcastHandler: function(message) {
+      if (message.entity) {
+        this.spawnOtherPlayer(message.entity);
+        this.updateOtherPlayer(message.entity);
+      }
+    },
+    spawnOtherPlayer: function(playerDetails) {
+      if (playerDetails.sessionId == undefined) {return;}
+      if (this.player && playerDetails.sessionId == this.player.name) {return;}
+      
+      var otherPlayer = this.getEntityByName(playerDetails.sessionId);
+      
+      if (!otherPlayer) {
+        otherPlayer = this.spawnEntity(
+            EntityGhost,
+            playerDetails.pos.x,
+            playerDetails.pos.y, 
+            {
+              name: playerDetails.sessionId
+            }
+        );
+      }
+    },
+    updateOtherPlayer: function(playerDetails) {
+      if (playerDetails.sessionId == undefined) {return;}
+      if (this.player && playerDetails.sessionId == this.player.name) {return;}
+      
+      var otherPlayer = this.getEntityByName(playerDetails.sessionId);
+      if (otherPlayer) {
+        otherPlayer.move(playerDetails.movementState);
+      }
+    }
 });
 
 

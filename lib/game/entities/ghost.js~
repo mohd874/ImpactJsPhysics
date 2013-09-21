@@ -26,10 +26,6 @@ EntityGhost = ig.Box2DEntity.extend({
         
         // Add the animations
         this.addAnim( 'idle', 1, [0] );
-
-        if(!ig.global.wm) {
-                this.body.SetFixedRotation(true);
-        }
     },
     
     createBody: function() {
@@ -61,17 +57,21 @@ EntityGhost = ig.Box2DEntity.extend({
         this.joint_2 = this.makeJoint(this.body, this.wheel_2.body)
     },
     update: function() {
+        
+        if (!this.name) {
+            ig.game.impsock.broadcast(this);
+            this.name = ig.game.impsock.sessionID;
+        }
+      
         // move left or right
-        if( ig.input.state('left') ) {
-            console.log('From car.js: Left pressed')
+        if( this.input == 'left' ) {
             if(!this.isMotorOn()){
                 this.switchMotorOn()	
             }
             this.switchMotorDirection(false)
             this.flip = true;
         }
-        else if( ig.input.state('right') ) {
-            console.log('From car.js: Right pressed')
+        else if( this.input == 'right' ) {
             if(!this.isMotorOn()){
                 this.switchMotorOn()	
             }
@@ -127,7 +127,23 @@ EntityGhost = ig.Box2DEntity.extend({
 			this.joint_1.SetMotorSpeed(-this.speed)
 			this.joint_2.SetMotorSpeed(-this.speed)	
 		}
-	}
+	},
+	move: function(direction){
+      
+	    this.input = direction
+      
+      
+      if (direction == "idle") {
+        this.idleCount += 1;
+      } else {
+        this.idleCount = 0;
+      }
+      
+      // when we've moved, broadcast our position to everyone else
+      if (this.idleCount <= 1) {
+        ig.game.impsock.broadcast(this);
+      }
+    }
 });
 
 });
